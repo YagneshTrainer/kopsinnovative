@@ -4,8 +4,28 @@ pipeline {
     environment {
         registry = "innovativeacademy/academyapp"
         registryCredentials = 'Dockerhub'
+        dbHostname = "innovative.cr3y72ybxjad.ap-south-1.rds.amazonaws.com"
     }
+
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Modify Properties File') {
+            steps {
+                script {
+                    // Use sed to replace or add properties in application.properties
+                    sh "sed -i 's|innovative.cuklu9atnt3c.ap-south-1.rds.amazonaws.com|${dbHostname}|g' src/main/resources/application.properties"
+
+                    // Check if the property exists and add it if it doesn't
+                    sh "grep -q '${dbHostname}' src/main/resources/application.properties || echo 'new_property=${dbHostname}' >> src/main/resources/application.properties"
+                }
+            }
+        }
+
         stage('Build') {
             steps {
                 sh 'mvn clean install -DskipTests'
@@ -25,6 +45,7 @@ pipeline {
                 }
             }
         }
+
         stage('Upload Image') {
             steps {
                 script {
